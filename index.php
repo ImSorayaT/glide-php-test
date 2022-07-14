@@ -1,15 +1,23 @@
 <?php
+require_once('database.php');
+
 class caloricValue {
+    protected $connection;
+    protected $db;
+
+    public function __construct($connection){
+        $this->database = $connection;
+        $this->db = $connection->connect();
+    }
 
     function get_report(){
         
         $current_day = new DateTime();
-        // Get current month and turn it into an int
+
+        // Get current month and year and turn it into an int
         $current_month = intval( date_format($current_day, 'n') );
         $current_year = intval( date_format($current_day, 'Y') );
         
-    
-        // echo  $current_month;
         $content = '';
         $i = $current_month;
         while($i > 0){
@@ -44,7 +52,6 @@ class caloricValue {
     
         foreach ($rows as $row){
             $results[] = $this->tdrows($row->childNodes);
-
         }
 
         $header = array_shift($results);
@@ -54,27 +61,142 @@ class caloricValue {
 
     // processes each row from the table and turns it into an array
     function tdrows($elements){
+        $keys = array('applicable_at', 'applicable_for', 'data_item', 'value', 'generated_time', 'quality_indicator');
 
-        $keys = array('applicable_at', 'applicable_for', 'data_item', 'value', 'generated_time');
-        
         foreach ($elements as $element) {
-
             if($element->tagName == 'td'){
                 $rowArray[] = $element->nodeValue;
             }
-            $rowArray_with_keys = array_fill_keys($keys, $rowArray);
+        }
+        
+        $rowArray_with_keys = array_combine($keys, $rowArray);
+        return $rowArray_with_keys;
+    }
+
+    function init_db(){
+        $db = $this->db;
+
+        $create_areas_table = "CREATE TABLE areas (
+            id INT(6) AUTO_INCREMENT PRIMARY KEY,
+            area_code VARCHAR(300) NOT NULL  
+            )ENGINE INNODB";
+
+        $create_caloricValues_table = "CREATE TABLE caloricValueData (
+                applicable_for DATETIME NOT NULL,
+                cal_value FLOAT (10.4),
+                area INT (6),
+                FOREIGN KEY (area) REFERENCES areas(id)
+                
+            )ENGINE INNODB";
+                
+
+            
+            if ($db->query($create_areas_table) === TRUE && $db->query($create_caloricValues_table) === TRUE) {
+                $content = $this->get_report();
+
+                $this->fill_area_table($db, $content);
+                $this->fill_caloricValueData_table($db, $content);
+
+
+            }else{
+                echo "Error creating table: " . $db->error;
+            }
+    }
+
+    function fill_area_table($db, $content ){
+
+        $area_array = $this->getAreas($content);
+
+        foreach($area_array as $area){
+
+            $fill_dataItems_table_sql = "INSERT INTO areas(`area_code`) VALUES ('$area')";
+            if ($db->query($fill_dataItems_table_sql) === TRUE) {              
+              } else {
+                echo "Error creating table: " . $db->error;
+              }        
 
         }
-        $rowArray_with_keys = array_fill_keys($keys, $rowArray[1]);
+    }
 
-        return $rowArray_with_keys;
+    function fill_caloricValueData_table($db, $content ){
+
+        $area_array = $this->getAreas($content);
+        
+
+        foreach($content as $row){
+            if(!empty($row)){
+                // var_dump($row);
+                if($row["data_item"]){
+                    $area = $this->getArea($row['data_item']);
+                    $area_id = array_search($area, $area_array) +1;
+                }
+
+                if($row["value"]){
+                    $value = floatval($row["value"]);
+                }else{
+                    var_dump($row);
+                    $value = NULL;
+                }
+
+
+
+                if($row['applicable_for']){
+
+                    $parsed_date = date_parse_from_format("d/m/Y", $row['applicable_for']);
+
+                    $month = str_pad(intval($parsed_date['month']), 2, '0', STR_PAD_LEFT);
+                    $day = str_pad(intval($parsed_date['day']), 2, '0', STR_PAD_LEFT);
+
+                    $applicable_for = $parsed_date['year'].'-'.$month.'-'.$day;                    
+
+                }else{
+                    $applicable_for = NULL;
+                }
+                
+
+                $fill_dataItems_table_sql = "INSERT INTO caloricValueData(`applicable_for`, `cal_value`, `area`) VALUES ( '$applicable_for','$value', '$area_id')";
+                if ($db->query($fill_dataItems_table_sql) === TRUE) {              
+                  } else {
+                    echo "Error creating table: " . $db->error;
+                  }        
+
+            }
+        }
+
+            
+
+
+        
+    }
+
+    function getAreas( array $content){
+
+        foreach($content as $row){ 
+            $area_array[] = $this->getArea($row['data_item']); 
+        }
+
+        $area_array_no_empty = array_filter($area_array);
+        $area_array_unique = array_unique($area_array_no_empty);
+
+
+        return $area_array_unique;
+
+    }
+
+    function getArea($area){
+        $first_half = explode('(', $area);
+        $second_half = explode(')', $first_half[1]);
+
+        return $second_half[0];
     }
     
 
 
 }
 
-$caloric_value = new caloricValue;
+$db = new database;
+$caloric_value = new caloricValue($db);
 
-var_dump($caloric_value->get_report());
+$caloric_value->init_db();
+// var_dump($caloric_value->get_report()[1]);
 
