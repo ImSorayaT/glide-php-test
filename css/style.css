@@ -81,3 +81,8 @@ body{
 .grid{
     margin: 0 !important;
 }
+
+#load-more{
+    margin: auto;
+    display: block;
+}

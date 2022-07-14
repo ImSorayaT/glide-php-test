@@ -5,6 +5,7 @@
     <link rel="stylesheet" href="css/UI-Table-master/table.min.css">
     <link rel="stylesheet" href="css/UI-Form-master/form.min.css">
     <link rel="stylesheet" href="css/UI-Grid-master/grid.min.css">
+    <link rel="stylesheet" href="css/UI-Button-master/button.min.css">
     <link rel="stylesheet" href="css/style.css">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -302,7 +303,7 @@ foreach($table as $row){
 
 </table>
 
-<button id="load-more">load more</button>
+<button id="load-more" class="ui button inverted">load more</button>
 </div>
 </div>
 </div>

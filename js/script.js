@@ -1,8 +1,6 @@
 
 $( document ).ready(function() {
     let resultCount = 50;
-    console.log();
-    console.log($(document).height() - $(window).height());
 
     $('#load-more').click(function() {
 
@@ -17,16 +15,13 @@ $( document ).ready(function() {
             }).done(function(result) {
 
             addToTable(JSON.parse(result));
-            resultCount = resultCount + 50;
-            console.log(resultCount);
+            resultCount = resultCount + 500;
         });
     });
 
     function addToTable(results){
-        console.log(results);
 
         $.each( results, function( index, result ){
-            console.log( result.cal_value );
     
             $('tbody').append(`
                 <tr>
