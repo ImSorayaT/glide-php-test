@@ -1,4 +1,4 @@
-<html !DOCTYPE>
+<!DOCTYPE html>
 
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,6 +9,13 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans&family=Rubik:wght@400;500&family=Share:wght@400;700&display=swap" rel="stylesheet"> 
+
+    <script
+			  src="https://code.jquery.com/jquery-3.6.0.min.js"
+			  integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
+			  crossorigin="anonymous"></script>
+
+    <script src="js/script.js"></script>
 </head>
 
 <body>
@@ -137,18 +144,19 @@
 
             $area_array = $this->getAreas($content);
             
-
             foreach($content as $row){
                 if(!empty($row)){
                     if($row["data_item"]){
                         $area = $this->getArea($row['data_item']);
                         $area_id = array_search($area, $area_array) +1;
+
+                        
                     }
 
                     if($row["value"]){
                         $value = floatval($row["value"]);
                     }else{
-                        var_dump($row);
+                        // var_dump($row);
                         $value = NULL;
                     }
 
@@ -188,15 +196,28 @@
             $area_array_unique = array_unique($area_array_no_empty);
 
 
-            return $area_array_unique;
+            return array_values($area_array_unique);
 
         }
 
         function getArea($area){
-            $first_half = explode('(', $area);
-            $second_half = explode(')', $first_half[1]);
+            
+            $remove_first = explode(',', $area);
 
-            return $second_half[0];
+            if(strpos($remove_first[1], '(') !== false){
+                $first_parenth = explode('(', $remove_first[1]);
+                $second_parenth = explode(')', $first_parenth[1]);
+
+                return $second_parenth[0];
+                
+            }else{
+                return $remove_first[1];
+            }
+
+    
+            
+
+            
         }
         
         function init_table(){
@@ -207,9 +228,10 @@
             if($result->num_rows > 0) {     
 
                 while($row = $result->fetch_assoc()) {
+                    $date = strtotime($row['applicable_for']);
 
                     $report[] = array(
-                        'applicable_for' => $row['applicable_for'],
+                        'applicable_for' => date('d/M/Y', $date),
                         'cal_value' => $row['cal_value'],
                         'area' => $row['area_code'],
                     );
@@ -270,16 +292,17 @@
 
 <?php
 foreach($table as $row){
-    $date = strtotime($row['applicable_for']);
     
     echo "<tr>
-            <td>".date('d/M/Y', $date)."</td>
+            <td>".$row['applicable_for']."</td>
             <td>".$row['cal_value']." </td>
             <td>".$row['area']." </td>
         </tr>";
 } ?>
 
 </table>
+
+<button id="load-more">load more</button>
 </div>
 </div>
 </div>
