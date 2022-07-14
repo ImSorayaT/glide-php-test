@@ -201,7 +201,7 @@
         
         function init_table(){
             $db = $this->db;
-            $get_report_sql = "SELECT * FROM caloricValueData JOIN areas ON caloricValueData.area = areas.id ORDER BY `applicable_for` DESC";
+            $get_report_sql = "SELECT * FROM caloricValueData JOIN areas ON caloricValueData.area = areas.id ORDER BY `applicable_for` DESC LIMIT 50";
 
             $result = $db->query($get_report_sql);
             if($result->num_rows > 0) {     
@@ -270,8 +270,10 @@
 
 <?php
 foreach($table as $row){
+    $date = strtotime($row['applicable_for']);
+    
     echo "<tr>
-            <td>".$row['applicable_for']."</td>
+            <td>".date('d/M/Y', $date)."</td>
             <td>".$row['cal_value']." </td>
             <td>".$row['area']." </td>
         </tr>";
