@@ -22,7 +22,6 @@
     <?php
     require_once('caloricValue.php');
 
-    // $caloric_value->init_db();
 
         $table = $caloric_value->init_table(); ?>
 

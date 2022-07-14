@@ -8,6 +8,20 @@ require_once('database.php');
         public function __construct($connection){
             $this->database = $connection;
             $this->db = $connection->connect();
+
+            $this->check_tables();
+        }
+
+        function check_tables(){
+            $db = $this->db;
+
+            $check_tables_sql = 'SELECT `id` FROM areas LIMIT 1 ';
+
+            $check_tables = $db->query($check_tables_sql);
+
+            if($check_tables == false){
+                $this->init_db();
+            }
         }
 
         function get_report(){
