@@ -12,16 +12,41 @@ require_once('database.php');
             $this->check_tables();
         }
 
+    
+
         function check_tables(){
             $db = $this->db;
+            $current_day = new DateTime();
+            $current_day_formatted = date_format($current_day, 'Y-m-d').' 00:00:00';
+
 
             $check_tables_sql = 'SELECT `id` FROM areas LIMIT 1 ';
+            $check_tables_today_sql = "SELECT `applicable_for` FROM caloricValueData WHERE `applicable_for` = '$current_day_formatted' LIMIT 1 ";
 
             $check_tables = $db->query($check_tables_sql);
 
+            $check_tables_today = $db->query($check_tables_today_sql);
+
             if($check_tables == false){
                 $this->init_db();
+            }elseif($check_tables_today == false) {
+                $this->check_the_site();
             }
+        }
+
+        function check_the_site(){
+
+            $current_day = new DateTime();
+            $current_day_formatted = date_format($current_day, 'Y-m-d');
+
+            $content = file_get_contents('http://mip-prd-web.azurewebsites.net/CustomDataDownload?LatestValue=false&Applicable=applicableFor&FromUtcDatetime='.$current_day_formatted.'T00:00:00.000Z&ToUtcDateTime='.$current_day_formatted.'T00:00:00.000Z&PublicationObjectStagingIds=PUBOBJ1660,PUBOB4507,PUBOB4508,PUBOB4510,PUBOB4509,PUBOB4511,PUBOB4512,PUBOB4513,PUBOB4514,PUBOB4515,PUBOB4516,PUBOB4517,PUBOB4518,PUBOB4519,PUBOB4521,PUBOB4520,PUBOB4522,PUBOBJ1661,PUBOBJ1662');
+
+            $array_content = $this->stringResultsToArray($content);
+            $db = $this->db;
+            $this->fill_caloricValueData_table($db, $array_content );
+        
+
+
         }
 
         function get_report(){
