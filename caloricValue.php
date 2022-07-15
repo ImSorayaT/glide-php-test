@@ -26,7 +26,6 @@ require_once('database.php');
             $check_tables = $db->query($check_tables_sql);
 
             $check_tables_today = $db->query($check_tables_today_sql);
-            var_dump($check_tables_today->num_rows);
             if($check_tables == false){
                 $this->init_db();
             }elseif($check_tables_today->num_rows == 0) {
