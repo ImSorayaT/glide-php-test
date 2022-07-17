@@ -29,16 +29,25 @@ require_once('database.php');
             if($check_tables == false){
                 $this->init_db();
             }elseif($check_tables_today->num_rows == 0) {
-                $this->check_the_site();
+                $this->update_the_site();
             }
         }
 
-        function check_the_site(){
+        function update_the_site(){
 
             $current_day = new DateTime();
             $current_day_formatted = date_format($current_day, 'Y-m-d');
 
-            $content = file_get_contents('http://mip-prd-web.azurewebsites.net/CustomDataDownload?LatestValue=false&Applicable=applicableFor&FromUtcDatetime='.$current_day_formatted.'T00:00:00.000Z&ToUtcDateTime='.$current_day_formatted.'T00:00:00.000Z&PublicationObjectStagingIds=PUBOBJ1660,PUBOB4507,PUBOB4508,PUBOB4510,PUBOB4509,PUBOB4511,PUBOB4512,PUBOB4513,PUBOB4514,PUBOB4515,PUBOB4516,PUBOB4517,PUBOB4518,PUBOB4519,PUBOB4521,PUBOB4520,PUBOB4522,PUBOBJ1661,PUBOBJ1662');
+            $last_day_sql = "SELECT `applicable_for` FROM caloricValueData ORDER BY `applicable_for` DESC  LIMIT 1 ";
+            $last_day_result = $this->db->query($last_day_sql);
+
+            while($row = $last_day_result->fetch_assoc()) {
+                $date = strtotime($row['applicable_for'].' + 1 day');
+                $last_day = date('Y-m-d', $date);
+                
+            }
+        
+            $content = file_get_contents('http://mip-prd-web.azurewebsites.net/CustomDataDownload?LatestValue=false&Applicable=applicableFor&FromUtcDatetime='.$last_day.'T00:00:00.000Z&ToUtcDateTime='.$current_day_formatted.'T00:00:00.000Z&PublicationObjectStagingIds=PUBOBJ1660,PUBOB4507,PUBOB4508,PUBOB4510,PUBOB4509,PUBOB4511,PUBOB4512,PUBOB4513,PUBOB4514,PUBOB4515,PUBOB4516,PUBOB4517,PUBOB4518,PUBOB4519,PUBOB4521,PUBOB4520,PUBOB4522,PUBOBJ1661,PUBOBJ1662');
 
             $array_content = $this->stringResultsToArray($content);
             $db = $this->db;
@@ -57,8 +66,8 @@ require_once('database.php');
             $current_year = intval( date_format($current_day, 'Y') );
             
             $content = '';
-            $i = $current_month;
-            while($i > 0){
+            $i = 1;
+            while($i <= $current_month){
                 $month = $i;
                 $last_day = cal_days_in_month(CAL_GREGORIAN, $month, $current_year);
                 
@@ -71,7 +80,7 @@ require_once('database.php');
 
                 $content .= file_get_contents('http://mip-prd-web.azurewebsites.net/CustomDataDownload?LatestValue=false&Applicable=applicableFor&FromUtcDatetime='.$first_day_month_formatted.'.000Z&ToUtcDateTime='.$last_day_month_formatted.'.000Z&PublicationObjectStagingIds=PUBOBJ1660,PUBOB4507,PUBOB4508,PUBOB4510,PUBOB4509,PUBOB4511,PUBOB4512,PUBOB4513,PUBOB4514,PUBOB4515,PUBOB4516,PUBOB4517,PUBOB4518,PUBOB4519,PUBOB4521,PUBOB4520,PUBOB4522,PUBOBJ1661,PUBOBJ1662');
 
-                $i--;
+                $i++;
             }
 
 
@@ -120,6 +129,7 @@ require_once('database.php');
                 )ENGINE INNODB";
 
             $create_caloricValues_table = "CREATE TABLE caloricValueData (
+                    id INT(6) AUTO_INCREMENT PRIMARY KEY,
                     applicable_for DATETIME NOT NULL,
                     cal_value FLOAT (10.4),
                     area INT (6),
